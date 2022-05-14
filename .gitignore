@@ -1,0 +1,13 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/ScoutingAppBase
+/ScoutingAppBase/ScoutingAppBase/bin/Debug/netstandard2.0
+/ScoutingAppBase/ScoutingAppBase.Android/bin/Debug
+/ScoutingAppBase/ScoutingAppBase.Android/obj/.cache
+/ScoutingAppBase/ScoutingAppBase.Android/obj/Debug/120
+/ScoutingAppBase/ScoutingAppBase.Android/obj
+/ScoutingAppBase/ScoutingAppBase.iOS/obj
+/ScoutingAppBase/ScoutingAppBase/obj/Debug/netstandard2.0
+/ScoutingAppBase/ScoutingAppBase/obj
