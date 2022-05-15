@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Xamarin.Forms;
 using Xamarin.CommunityToolkit;
 
-namespace ScoutingAppBase
+namespace ScoutingAppBase.Pages
 {
   public partial class MainPage : ContentPage
   {

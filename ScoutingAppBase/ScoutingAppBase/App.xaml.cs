@@ -11,7 +11,7 @@ namespace ScoutingAppBase
     {
       InitializeComponent();
 
-      MainPage = new MainPage();
+      MainPage = new ScoutingAppBase.Pages.MainPage();
     }
 
     protected override void OnStart()

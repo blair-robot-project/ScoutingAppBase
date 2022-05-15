@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Xamarin.Forms;
 
-namespace ScoutingAppBase
+namespace ScoutingAppBase.Pages
 {
   /// <summary>
   /// A Behavior for numeric inputs that makes the input turn red when a non-numeric input is given.
