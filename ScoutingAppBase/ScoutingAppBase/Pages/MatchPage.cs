@@ -15,6 +15,11 @@ namespace ScoutingAppBase.Pages
     {
       Match = match;
       var layout = new StackLayout();
+
+      var backButton = new Button { Text = "Back" };
+      backButton.Clicked += (sender, e) => Navigation.PopAsync();
+      layout.Children.Add(backButton);
+
       foreach (var fieldConfig in fieldConfigs)
       {
         layout.Children.Add(FieldConfigToElement(fieldConfig));
@@ -43,7 +48,7 @@ namespace ScoutingAppBase.Pages
     private View NumElement(FieldConfig config)
     {
       var defaultVal = config.Min;
-      Match.Fields.Add(config.Name, defaultVal.ToString());
+      Match.Fields[config.Name] = defaultVal.ToString();
 
       var valueLabel = new Label { Text = defaultVal.ToString() };
       var stepper = new Stepper
@@ -57,7 +62,7 @@ namespace ScoutingAppBase.Pages
       {
         var newVal = e.NewValue.ToString();
         valueLabel.Text = newVal;
-        Match.Fields.Add(config.Name, newVal);
+        Match.Fields[config.Name] = newVal;
       };
 
       return new StackLayout
@@ -73,12 +78,12 @@ namespace ScoutingAppBase.Pages
 
     private View BoolElement(FieldConfig config)
     {
-      Match.Fields.Add(config.Name, "false");
+      Match.Fields[config.Name] = "false";
 
       var checkbox = new CheckBox();
       checkbox.CheckedChanged += (_, e) =>
       {
-        Match.Fields.Add(config.Name, e.Value.ToString());
+        Match.Fields[config.Name] = e.Value.ToString();
       };
 
       return new StackLayout
@@ -102,7 +107,7 @@ namespace ScoutingAppBase.Pages
       foreach (var choice in config.Choices)
       {
         var isSelected = config.DefaultChoice == choice;
-        Match.Fields.Add(config.Name, isSelected.ToString());
+        Match.Fields[config.Name] = isSelected.ToString();
 
         var button = new RadioButton
         {
@@ -111,7 +116,7 @@ namespace ScoutingAppBase.Pages
         };
         button.CheckedChanged += (_, e) =>
         {
-          Match.Fields.Add(config.Name, e.Value.ToString());
+          Match.Fields[config.Name] = e.Value.ToString();
         };
 
         layout.Children.Add(button);
@@ -122,12 +127,12 @@ namespace ScoutingAppBase.Pages
 
     private View TextElement(FieldConfig config)
     {
-      Match.Fields.Add(config.Name, "");
+      Match.Fields[config.Name] = "";
 
       var text = new Entry();
       text.TextChanged += (_, e) =>
       {
-        Match.Fields.Add(config.Name, e.NewTextValue);
+        Match.Fields[config.Name] = e.NewTextValue;
       };
 
       return new StackLayout

@@ -24,7 +24,7 @@ namespace ScoutingAppBase.Event
     /// Load the last saved event from the given folder.
     /// </summary>
     /// <returns>The Event if loading was successful, null if something went wrong</returns>
-    public static Event? LoadEvent(string storageFolder)
+    public static EventData? LoadEvent(string storageFolder)
     {
       var eventConfig = LoadConfig(Path.Combine(storageFolder, ConfigFileName));
       if (eventConfig == null)
@@ -43,7 +43,7 @@ namespace ScoutingAppBase.Event
         }
       }
 
-      return new Event(eventConfig, matches);
+      return new EventData(eventConfig, matches);
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ namespace ScoutingAppBase.Event
     /// </summary>
     /// <param name="ev"></param>
     /// <param name="storageFolder"></param>
-    public static void SaveEvent(Event ev, string storageFolder)
+    public static void SaveEvent(EventData ev, string storageFolder)
     {
       Serialize(ev.Config, Path.Combine(storageFolder, ConfigFileName));
 

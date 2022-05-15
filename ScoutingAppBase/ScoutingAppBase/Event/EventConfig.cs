@@ -13,7 +13,7 @@ namespace ScoutingAppBase.Event
 
     public int TeamNumber { get; set; }
 
-    public List<FieldConfig> FieldConfigs;
+    public List<FieldConfig> FieldConfigs = new List<FieldConfig>();
   }
 
   public class FieldConfig
