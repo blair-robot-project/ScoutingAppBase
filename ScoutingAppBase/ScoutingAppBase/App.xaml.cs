@@ -3,6 +3,8 @@ using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using Xamarin.CommunityToolkit;
 
+#nullable enable
+
 namespace ScoutingAppBase
 {
   public partial class App : Application

@@ -7,7 +7,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScoutingAppBase.Android", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScoutingAppBase.iOS", "ScoutingAppBase\ScoutingAppBase.iOS\ScoutingAppBase.iOS.csproj", "{01792182-1DFE-4D44-AE05-7981BD7015A9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ScoutingAppBase", "ScoutingAppBase\ScoutingAppBase\ScoutingAppBase.csproj", "{A3BCE243-AC6B-4AC3-9670-F5533764BADE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScoutingAppBase", "ScoutingAppBase\ScoutingAppBase\ScoutingAppBase.csproj", "{A3BCE243-AC6B-4AC3-9670-F5533764BADE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{42C277A9-2BED-432B-97B7-DE8D1D9DB32C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

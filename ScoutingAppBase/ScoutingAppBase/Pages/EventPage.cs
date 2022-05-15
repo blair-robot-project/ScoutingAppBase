@@ -18,5 +18,10 @@ namespace ScoutingAppBase.Pages
                 }
       };
     }
+
+    public void OpenMatch()
+    {
+      
+    }
   }
 }

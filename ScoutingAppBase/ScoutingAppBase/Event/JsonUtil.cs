@@ -5,8 +5,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-#nullable enable
-
 namespace ScoutingAppBase.Event
 {
   public class JsonUtil
@@ -34,13 +32,13 @@ namespace ScoutingAppBase.Event
         return null;
       }
 
-      var matches = new List<Match>();
+      var matches = new List<MatchData>();
 
       foreach (var file in Directory.EnumerateFiles(storageFolder))
       {
         if (file.StartsWith(MatchFilePrefix) && file.EndsWith(".json"))
         {
-          var match = Deserialize<Match>(Path.Combine(file));
+          var match = Deserialize<MatchData>(Path.Combine(file));
           if (match != null) matches.Add(match);
         }
       }
@@ -66,12 +64,12 @@ namespace ScoutingAppBase.Event
         }
       }
 
-      var matches = new List<Match>();
+      var matches = new List<MatchData>();
 
       int i = 0;
       foreach (var match in ev.Matches)
       {
-        var matchName = match.MatchName ?? i.ToString();
+        var matchName = match.Id ?? i.ToString();
         Serialize(match, Path.Combine(storageFolder, $"{MatchFilePrefix}{matchName}.json"));
         i++;
       }

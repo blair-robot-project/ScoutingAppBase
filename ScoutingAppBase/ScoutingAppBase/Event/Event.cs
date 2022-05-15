@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 
 #nullable enable
 
@@ -11,7 +12,7 @@ namespace ScoutingAppBase.Event
 
   public class Event
   {
-    public Event(EventConfig config, List<Match> matches)
+    public Event(EventConfig config, List<MatchData> matches)
     {
       Config = config;
       Matches = matches;
@@ -19,29 +20,16 @@ namespace ScoutingAppBase.Event
 
     public readonly EventConfig Config;
 
-    public readonly List<Match> Matches;
+    public readonly List<MatchData> Matches;
   }
 
-  public class Match
+  public class MatchData
   {
-    public Match(List<FieldConfig> fieldConfigs)
-    {
-      FieldConfigs = fieldConfigs.ToDictionary(fieldConfig => fieldConfig.Name);
-    }
+    [JsonConstructor]
+    public MatchData(string? id, Alliance alliance, int robotNum, bool synced, Dictionary<string, string> fields)
+      => (Id, Alliance, RobotNum, Synced, Fields) = (id, alliance, robotNum, synced, fields);
 
-    /// <summary>
-    /// Whether this match has been sent over to the server
-    /// </summary>
-    public bool Synced { get; set; } = false;
-
-    public string? MatchName { get; set; }
-
-    /// <summary>
-    /// Whether this match is a replay
-    /// </summary>
-    public bool IsReplay { get; set; } = false;
-
-    public readonly Dictionary<string, FieldConfig> FieldConfigs;
+    public string? Id { get; set; }
 
     /// <summary>
     /// The alliance of the robot to scout
@@ -53,37 +41,12 @@ namespace ScoutingAppBase.Event
     /// </summary>
     public int RobotNum { get; set; }
 
-    private readonly Dictionary<string, string> Fields = new Dictionary<string, string>();
+    /// <summary>
+    /// Whether this match has been sent over to the server
+    /// </summary>
+    public bool Synced { get; set; } = false;
 
-    public void SetNum(string key, double value)
-    {
-      Debug.Assert(FieldConfigs.ContainsKey(key));
-
-      var cfg = FieldConfigs[key];
-      Debug.Assert(cfg.Type == FieldType.Num);
-      Debug.Assert(value >= cfg.Min && value <= cfg.Max);
-
-      Fields.Add(key, value.ToString());
-    }
-
-    public void SetBool(string key, bool value)
-    {
-      Debug.Assert(FieldConfigs.ContainsKey(key));
-      Debug.Assert(FieldConfigs[key].Type == FieldType.Bool);
-
-      Fields.Add(key, value.ToString());
-    }
-
-    public void SetRadio(string key, int choice)
-    {
-      Debug.Assert(FieldConfigs.ContainsKey(key));
-
-      var cfg = FieldConfigs[key];
-      Debug.Assert(cfg.Type == FieldType.Radio);
-      Debug.Assert(choice >= 0 && choice < cfg.Choices.Count());
-
-      Fields.Add(key, cfg.Choices[choice]);
-    }
+    internal readonly Dictionary<string, string> Fields = new Dictionary<string, string>();
   }
 
   public enum Alliance
