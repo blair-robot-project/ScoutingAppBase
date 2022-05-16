@@ -9,10 +9,12 @@ namespace ScoutingAppBase.Event
 {
   public class EventConfig
   {
+    [JsonPropertyName("event")]
     public string EventName;
 
-    public int TeamNumber { get; set; }
+    public int OurTeam { get; set; }
 
+    [JsonPropertyName("fields")]
     public List<FieldConfig> FieldConfigs = new List<FieldConfig>();
   }
 
