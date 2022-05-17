@@ -13,16 +13,23 @@ namespace ScoutingAppBase
 {
   public partial class App : Application
   {
+    /// <summary>
+    /// The folder where all event data will be stored
+    /// </summary>
+    public static readonly string StorageFolder =
+      Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
     public App()
     {
       InitializeComponent();
 
-      var eventConfig = new EventConfig {
-        TeamNumber = 449,
+      var eventConfig = new EventConfig
+      {
         EventName = "dcmp",
+        OurTeam = 449,
         FieldConfigs =
         {
-          new FieldConfig { 
+          new FieldConfig {
             Name = "foo",
             Type = FieldType.Num,
             Min = 0,

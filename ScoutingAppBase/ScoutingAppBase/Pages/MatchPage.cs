@@ -9,7 +9,7 @@ using ScoutingAppBase.Event;
 
 namespace ScoutingAppBase.Pages
 {
-  public class MatchPage : ContentPage
+  public sealed class MatchPage : ContentPage
   {
     public MatchPage(MatchData match, List<FieldConfig> fieldConfigs)
     {

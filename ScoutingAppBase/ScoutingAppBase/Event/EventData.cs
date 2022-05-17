@@ -10,7 +10,7 @@ using System.Text.Json.Serialization;
 namespace ScoutingAppBase.Event
 {
 
-  public class EventData
+  public sealed class EventData
   {
     public EventData(EventConfig config, List<MatchData> matches)
     {
@@ -23,7 +23,7 @@ namespace ScoutingAppBase.Event
     public readonly List<MatchData> Matches;
   }
 
-  public class MatchData
+  public sealed class MatchData
   {
     [JsonConstructor]
     public MatchData(string? id, Alliance alliance, int robotNum, bool synced, Dictionary<string, string> fields)

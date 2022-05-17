@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 #nullable disable
 
 namespace ScoutingAppBase.Event
 {
-  public class EventConfig
+  public sealed class EventConfig
   {
     [JsonPropertyName("event")]
     public string EventName;
@@ -18,7 +16,7 @@ namespace ScoutingAppBase.Event
     public List<FieldConfig> FieldConfigs = new List<FieldConfig>();
   }
 
-  public class FieldConfig
+  public sealed class FieldConfig
   {
     public string Name { get; set; }
 

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 using Xamarin.Forms;
 
@@ -9,35 +6,80 @@ using ScoutingAppBase.Event;
 
 namespace ScoutingAppBase.Pages
 {
-  public class EventPage : ContentPage
+  public sealed class EventPage : ContentPage
   {
     public EventPage(EventData eventData)
     {
       EventData = eventData;
+      MatchViews = new Dictionary<Button, MatchData>();
+      var content = new StackLayout();
+      Content = content;
 
-      var newMatchButton = new Button
-      {
-        Text = "+"
-      };
+      var syncButton = new Button { Text = "Sync" };
+      var newMatchButton = new Button { Text = "+" };
+      var settingsButton = new Button { Text = "Settings" };
+
+      NavigationPage.SetTitleView(
+        this, new StackLayout
+        {
+          Orientation = StackOrientation.Horizontal,
+          Children =
+          {
+            new Label
+            {
+              Text = eventData.Config.EventName
+            },
+            syncButton,
+            newMatchButton,
+            settingsButton
+          }
+        });
+
+      var matchesLayout = new StackLayout();
+
+      content.Children.Add(newMatchButton);
+      content.Children.Add(matchesLayout);
+
       newMatchButton.Clicked += (sender, e) =>
       {
-        var match = new MatchData();
+        // Its name starts off as its index in the list of matches
+        var matchId = $"{EventData.Matches.Count}";
+        var match = new MatchData { Id = matchId };
         EventData.Matches.Add(match);
+
+        // Add a button on the event page for going to the match
+        var matchButton = new Button { Text = matchId };
+        matchesLayout.Children.Add(matchButton);
+
         GoToMatch(match);
       };
 
-      var layout = new StackLayout
+      syncButton.Clicked += (sender, e) =>
       {
-        Children = {
-          new Label { Text = "Welcome to Xamarin.Forms!" },
-          newMatchButton
-        }
+        // todo sync with server
       };
 
-      Content = layout;
+      settingsButton.Clicked += (sender, e) =>
+      {
+        Navigation.PushModalAsync(new SettingsPage());
+      };
     }
 
     private readonly EventData EventData;
+
+    /// <summary>
+    /// Used for mapping buttons to go to a match with that match's data
+    /// </summary>
+    private readonly Dictionary<Button, MatchData> MatchViews;
+
+    override protected void OnAppearing()
+    {
+      // Update the ids of all the matches
+      foreach (var (matchButton, matchData) in MatchViews)
+      {
+        matchButton.Text = matchData.Id ?? matchButton.Text;
+      }
+    }
 
     private async void GoToMatch(MatchData matchData)
     {
