@@ -7,12 +7,10 @@ using System.Text.Json.Serialization;
 
 namespace ScoutingAppBase.Event
 {
-  public sealed class JsonUtil
+  public static class JsonUtil
   {
     private static readonly string ConfigFileName = "config.json";
     private static readonly string MatchFilePrefix = "match-";
-
-    private JsonUtil() { }
 
     private static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
     {
