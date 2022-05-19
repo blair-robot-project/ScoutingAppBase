@@ -2,7 +2,7 @@
 
 using Xamarin.Forms;
 
-using ScoutingAppBase.Event;
+using ScoutingAppBase.Data;
 
 namespace ScoutingAppBase.Pages
 {

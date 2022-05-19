@@ -6,9 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ScoutingAppBase.Event;
-
-namespace ScoutingAppBase.Comms
+namespace ScoutingAppBase.Data
 {
   internal sealed class Bluetooth : IDisposable
   {

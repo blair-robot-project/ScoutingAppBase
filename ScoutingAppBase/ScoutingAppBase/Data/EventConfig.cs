@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 #nullable disable
 
-namespace ScoutingAppBase.Event
+namespace ScoutingAppBase.Data
 {
   public sealed class EventConfig
   {

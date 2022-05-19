@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 
 #nullable enable
 
-namespace ScoutingAppBase.Event
+namespace ScoutingAppBase.Data
 {
 
   public sealed class EventData
@@ -47,6 +47,8 @@ namespace ScoutingAppBase.Event
     /// Whether this match has been sent over to the server
     /// </summary>
     public bool Synced { get; set; } = false;
+
+    public string Comments { get; set; } = false;
 
     internal readonly Dictionary<string, string> Fields = new Dictionary<string, string>();
   }

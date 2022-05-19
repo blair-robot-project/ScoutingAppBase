@@ -4,7 +4,7 @@ using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using Xamarin.CommunityToolkit;
 
-using ScoutingAppBase.Event;
+using ScoutingAppBase.Data;
 using ScoutingAppBase.Pages;
 
 #nullable enable
