@@ -12,12 +12,6 @@ namespace ScoutingAppBase.Data
     private static readonly string ConfigFileName = "config.json";
     private static readonly string MatchFilePrefix = "match-";
 
-    public static byte[] Encode(MatchData data) 
-    {
-      // todo implement
-      return null;
-    }
-
     private static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
     {
       PropertyNamingPolicy = JsonNamingPolicy.CamelCase,

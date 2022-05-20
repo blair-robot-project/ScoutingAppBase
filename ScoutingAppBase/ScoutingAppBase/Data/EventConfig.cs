@@ -12,6 +12,16 @@ namespace ScoutingAppBase.Data
 
     public int OurTeam { get; set; }
 
+    /// <summary>
+    /// The MAC address of the laptop
+    /// </summary>
+    public string CentralMac { get; set; }
+
+    /// <summary>
+    /// The UUID of the custom service
+    /// </summary>
+    public string ServiceUuid { get; set; }
+
     [JsonPropertyName("fields")]
     public List<FieldConfig> FieldConfigs = new List<FieldConfig>();
   }
@@ -21,6 +31,11 @@ namespace ScoutingAppBase.Data
     public string Name { get; set; }
 
     public FieldType Type { get; set; }
+
+    /// <summary>
+    /// The UUID of the corresponding GATT characteristic
+    /// </summary>
+    public string CharUuid { get; set; }
 
     /// <summary>
     /// Minimum value possible (only for numbers)
