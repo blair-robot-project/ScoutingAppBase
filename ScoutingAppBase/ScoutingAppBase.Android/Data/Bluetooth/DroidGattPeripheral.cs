@@ -5,22 +5,25 @@ using Android.Content;
 using Android.OS;
 using Android.Runtime;
 using Java.Util;
-using ScoutingAppBase.Data.Bluetooth;
+using ScoutingAppBase.Bluetooth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ScoutingAppBase.Droid.Data.Bluetooth
+namespace ScoutingAppBase.Droid.Bluetooth
 {
-  internal class DroidGattPeripheral : IGattPeripheral
+  internal class DroidGattPeripheral : GattPeripheral
   {
     private readonly BluetoothManager Manager;
     private readonly BluetoothAdapter Adapter;
     private readonly BluetoothGattServer GattServer;
 
-    public DroidGattPeripheral(List<GattService> services)
+    public DroidGattPeripheral(
+      BluetoothManager manager,
+      List<GattService> services,
+      GattPeripheralCallbacks callbacks) : base(services, callbacks)
     {
-      Manager = (BluetoothManager)Application.Context.GetSystemService(Context.BluetoothService);
+      Manager = manager;
       Adapter = Manager.Adapter;
 
       GattServer = Manager.OpenGattServer(Application.Context, new GattServerCallbackImpl())!;
@@ -28,12 +31,9 @@ namespace ScoutingAppBase.Droid.Data.Bluetooth
       // Add our custom service and characteristics
       foreach (var service in services)
       {
-        var serviceType = service.ServiceType == GattService.Type.Primary
-            ? GattServiceType.Primary
-            : GattServiceType.Secondary;
         var droidService = new BluetoothGattService(
           UUID.FromString(service.Uuid),
-          serviceType
+          service.IsPrimary ? GattServiceType.Primary : GattServiceType.Secondary
         );
 
         foreach (var characteristic in service.Characteristics)
@@ -52,31 +52,6 @@ namespace ScoutingAppBase.Droid.Data.Bluetooth
 
         GattServer.AddService(droidService);
       }
-
-      // Start advertising
-      var adSettings = new AdvertiseSettings.Builder()
-        .SetConnectable(true)
-        .SetTimeout(0)
-        .SetAdvertiseMode(AdvertiseMode.LowLatency)
-        .SetTxPowerLevel(AdvertiseTx.PowerHigh)
-        .Build();
-
-      var adDataBuilder = new AdvertiseData.Builder()
-        .SetIncludeDeviceName(true)
-        .SetIncludeTxPowerLevel(true);
-
-      foreach (var service in services)
-      {
-        adDataBuilder.AddServiceUuid(new ParcelUuid(UUID.FromString(service.Uuid)));
-      }
-
-      Adapter.BluetoothLeAdvertiser.StartAdvertising(
-        adSettings, adDataBuilder.Build(), new AdvertiseCallbackImpl());
-    }
-
-    public void Dispose()
-    {
-      // todo implement
     }
 
     /// <summary>
@@ -84,36 +59,48 @@ namespace ScoutingAppBase.Droid.Data.Bluetooth
     /// </summary>
     /// <param name="prop"></param>
     /// <returns></returns>
-    private static GattProperty ToDroidProp(GattCharacteristic.Property prop) => prop switch
+    private static GattProperty ToDroidProp(GattChar.Property prop)
     {
-      GattCharacteristic.Property.Broadcast => GattProperty.Broadcast,
-      GattCharacteristic.Property.Read => GattProperty.Read,
-      GattCharacteristic.Property.WriteNoResponse => GattProperty.WriteNoResponse,
-      GattCharacteristic.Property.Write => GattProperty.Write,
-      GattCharacteristic.Property.Notify => GattProperty.Notify,
-      GattCharacteristic.Property.Indicate => GattProperty.Indicate,
-      GattCharacteristic.Property.SignedWrite => GattProperty.SignedWrite,
-      GattCharacteristic.Property.ExtendedProps => GattProperty.ExtendedProps,
-      _ => 0 // Unsupported by Android
-    };
+      switch (prop)
+      {
+        case GattChar.Property.Broadcast: return GattProperty.Broadcast;
+        case GattChar.Property.Read: return GattProperty.Read;
+        case GattChar.Property.WriteNoResponse: return GattProperty.WriteNoResponse;
+        case GattChar.Property.Write: return GattProperty.Write;
+        case GattChar.Property.Notify: return GattProperty.Notify;
+        case GattChar.Property.Indicate: return GattProperty.Indicate;
+        case GattChar.Property.SignedWrite: return GattProperty.SignedWrite;
+        case GattChar.Property.ExtendProps: return GattProperty.ExtendedProps;
+        default: throw new ArgumentOutOfRangeException(nameof(prop), $"Unknown property {prop}");
+      }
+    }
 
     /// <summary>
     /// Convert one of our Permission objects to an Android flag
     /// </summary>
     /// <param name="perm"></param>
     /// <returns></returns>
-    private static GattPermission ToDroidPerm(GattCharacteristic.Permission perm) => perm switch
+    private static GattPermission ToDroidPerm(GattChar.Permission perm)
     {
-      GattCharacteristic.Permission.Read => GattPermission.Read,
-      GattCharacteristic.Permission.ReadEncrypted => GattPermission.ReadEncrypted,
-      GattCharacteristic.Permission.ReadEncryptedMitm => GattPermission.Read,
-      GattCharacteristic.Permission.Write => GattPermission.Read,
-      GattCharacteristic.Permission.WriteEncrypted => GattPermission.Read,
-      GattCharacteristic.Permission.WriteEncryptedMitm => GattPermission.Read,
-      GattCharacteristic.Permission.WriteSigned => GattPermission.Read,
-      GattCharacteristic.Permission.WriteSignedMitm => GattPermission.Read,
-      _ => throw new ArgumentOutOfRangeException(nameof(perm), $"Unknown permission {perm}")
-    };
+      switch (perm)
+      {
+        case GattChar.Permission.Read: return GattPermission.Read;
+        case GattChar.Permission.ReadEncrypted: return GattPermission.ReadEncrypted;
+        case GattChar.Permission.ReadEncryptedMitm: return GattPermission.ReadEncryptedMitm;
+        case GattChar.Permission.Write: return GattPermission.Write;
+        case GattChar.Permission.WriteEncrypted: return GattPermission.WriteEncrypted;
+        case GattChar.Permission.WriteEncryptedMitm: return GattPermission.WriteEncryptedMitm;
+        case GattChar.Permission.WriteSigned: return GattPermission.WriteSigned;
+        case GattChar.Permission.WriteSignedMitm: return GattPermission.WriteSignedMitm;
+        default: throw new ArgumentOutOfRangeException(nameof(perm), $"Unknown permission {perm}");
+      }
+    }
+
+
+    override public void Dispose()
+    {
+      // todo implement
+    }
 
     private class GattServerCallbackImpl : BluetoothGattServerCallback
     {

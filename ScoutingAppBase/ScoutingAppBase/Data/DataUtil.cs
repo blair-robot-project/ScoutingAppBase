@@ -64,14 +64,10 @@ namespace ScoutingAppBase.Data
         }
       }
 
-      var matches = new List<MatchData>();
-
-      int i = 0;
       foreach (var match in ev.Matches)
       {
-        var matchName = match.Id ?? i.ToString();
+        var matchName = match[GeneralFields.MatchNum];
         Serialize(match, Path.Combine(storageFolder, $"{MatchFilePrefix}{matchName}.json"));
-        i++;
       }
     }
 
@@ -85,13 +81,13 @@ namespace ScoutingAppBase.Data
       if (config == null) return null;
 
       // todo more complete validation
-      if (config.EventName == null || config.FieldConfigs == null) return null;
+      if (config.EventName == null || config.SpecFieldConfigs == null) return null;
 
-      foreach (var field in config.FieldConfigs)
+      foreach (var field in config.SpecFieldConfigs)
       {
         if (field.Name == null) return null;
 
-        if (field.Type == FieldType.Radio && field.Choices == null) return null;
+        if (field.Type == FieldType.Choice && field.Choices == null) return null;
       }
 
       return config;

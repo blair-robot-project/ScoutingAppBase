@@ -27,7 +27,7 @@ namespace ScoutingAppBase
       {
         EventName = "dcmp",
         OurTeam = 449,
-        FieldConfigs =
+        SpecFieldConfigs =
         {
           new FieldConfig {
             Name = "foo",

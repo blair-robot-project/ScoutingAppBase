@@ -83,7 +83,7 @@ namespace ScoutingAppBase.Pages
 
     private async void GoToMatch(MatchData matchData)
     {
-      await Navigation.PushAsync(new MatchPage(matchData, EventData.Config.FieldConfigs));
+      await Navigation.PushAsync(new MatchPage(matchData, EventData.Config.SpecFieldConfigs));
     }
   }
 }

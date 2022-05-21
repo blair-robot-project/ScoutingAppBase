@@ -38,7 +38,7 @@ namespace ScoutingAppBase.Pages
           return NumElement(config);
         case FieldType.Bool:
           return BoolElement(config);
-        case FieldType.Radio:
+        case FieldType.Choice:
           return RadioElement(config);
         default:
           return TextElement(config);

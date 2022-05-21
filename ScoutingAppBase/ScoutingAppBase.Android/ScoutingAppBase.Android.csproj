@@ -68,7 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\Bluetooth\DroidGattPeripheral.cs" />
-    <Compile Include="Data\Bluetooth\DroidGattPeripheralCreator.cs" />
+    <Compile Include="Data\Bluetooth\DroidGattPeripheralManager.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
