@@ -13,7 +13,7 @@ namespace ScoutingAppBase.Data.Bluetooth
     /// Create a peripheral device
     /// </summary>
     /// <returns>A platform-specific peripheral device object</returns>
-    public abstract IGattPeripheral Create(EventConfig config);
+    public abstract IGattPeripheral Create(List<GattService> services);
 
     /// <summary>
     /// Gets the platform-specific <see cref="IGattPeripheralCreator"/>

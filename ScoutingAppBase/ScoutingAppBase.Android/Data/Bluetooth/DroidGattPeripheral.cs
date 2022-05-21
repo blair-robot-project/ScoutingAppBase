@@ -5,13 +5,10 @@ using Android.Content;
 using Android.OS;
 using Android.Runtime;
 using Java.Util;
+using ScoutingAppBase.Data.Bluetooth;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-
-using ScoutingAppBase.Data;
-using ScoutingAppBase.Data.Bluetooth;
 
 namespace ScoutingAppBase.Droid.Data.Bluetooth
 {
@@ -21,31 +18,40 @@ namespace ScoutingAppBase.Droid.Data.Bluetooth
     private readonly BluetoothAdapter Adapter;
     private readonly BluetoothGattServer GattServer;
 
-    private readonly EventConfig Config;
-
-    public DroidGattPeripheral(EventConfig config)
+    public DroidGattPeripheral(List<GattService> services)
     {
-      Config = config;
       Manager = (BluetoothManager)Application.Context.GetSystemService(Context.BluetoothService);
       Adapter = Manager.Adapter;
 
       GattServer = Manager.OpenGattServer(Application.Context, new GattServerCallbackImpl())!;
 
       // Add our custom service and characteristics
-      var serviceUuid = UUID.FromString(config.ServiceUuid);
-      var service = new BluetoothGattService(serviceUuid, GattServiceType.Primary);
-
-      foreach (var fieldConfig in Config.FieldConfigs)
+      foreach (var service in services)
       {
-        var characteristic = new BluetoothGattCharacteristic(
-          UUID.FromString(fieldConfig.CharUuid),
-          GattProperty.Read | GattProperty.Write | GattProperty.Notify,
-          GattPermission.Read | GattPermission.Write
+        var serviceType = service.ServiceType == GattService.Type.Primary
+            ? GattServiceType.Primary
+            : GattServiceType.Secondary;
+        var droidService = new BluetoothGattService(
+          UUID.FromString(service.Uuid),
+          serviceType
         );
-        service.AddCharacteristic(characteristic);
-      }
 
-      GattServer.AddService(service);
+        foreach (var characteristic in service.Characteristics)
+        {
+          GattProperty props = characteristic.Properties
+            .Select(ToDroidProp)
+            .Aggregate((p1, p2) => p1 | p2);
+          GattPermission perms = characteristic.Permissions
+            .Select(ToDroidPerm)
+            .Aggregate((p1, p2) => p1 | p2);
+          var droidChar = new BluetoothGattCharacteristic(
+            UUID.FromString(characteristic.Uuid), props, perms
+          );
+          droidService.AddCharacteristic(droidChar);
+        }
+
+        GattServer.AddService(droidService);
+      }
 
       // Start advertising
       var adSettings = new AdvertiseSettings.Builder()
@@ -55,19 +61,59 @@ namespace ScoutingAppBase.Droid.Data.Bluetooth
         .SetTxPowerLevel(AdvertiseTx.PowerHigh)
         .Build();
 
-      var adData = new AdvertiseData.Builder()
+      var adDataBuilder = new AdvertiseData.Builder()
         .SetIncludeDeviceName(true)
-        .SetIncludeTxPowerLevel(true)
-        .AddServiceUuid(new ParcelUuid(serviceUuid))
-        .Build();
+        .SetIncludeTxPowerLevel(true);
 
-      Adapter.BluetoothLeAdvertiser.StartAdvertising(adSettings, adData, new AdvertiseCallbackImpl());
+      foreach (var service in services)
+      {
+        adDataBuilder.AddServiceUuid(new ParcelUuid(UUID.FromString(service.Uuid)));
+      }
+
+      Adapter.BluetoothLeAdvertiser.StartAdvertising(
+        adSettings, adDataBuilder.Build(), new AdvertiseCallbackImpl());
     }
 
     public void Dispose()
     {
       // todo implement
     }
+
+    /// <summary>
+    /// Convert one of our Property objects to an Android flag
+    /// </summary>
+    /// <param name="prop"></param>
+    /// <returns></returns>
+    private static GattProperty ToDroidProp(GattCharacteristic.Property prop) => prop switch
+    {
+      GattCharacteristic.Property.Broadcast => GattProperty.Broadcast,
+      GattCharacteristic.Property.Read => GattProperty.Read,
+      GattCharacteristic.Property.WriteNoResponse => GattProperty.WriteNoResponse,
+      GattCharacteristic.Property.Write => GattProperty.Write,
+      GattCharacteristic.Property.Notify => GattProperty.Notify,
+      GattCharacteristic.Property.Indicate => GattProperty.Indicate,
+      GattCharacteristic.Property.SignedWrite => GattProperty.SignedWrite,
+      GattCharacteristic.Property.ExtendedProps => GattProperty.ExtendedProps,
+      _ => 0 // Unsupported by Android
+    };
+
+    /// <summary>
+    /// Convert one of our Permission objects to an Android flag
+    /// </summary>
+    /// <param name="perm"></param>
+    /// <returns></returns>
+    private static GattPermission ToDroidPerm(GattCharacteristic.Permission perm) => perm switch
+    {
+      GattCharacteristic.Permission.Read => GattPermission.Read,
+      GattCharacteristic.Permission.ReadEncrypted => GattPermission.ReadEncrypted,
+      GattCharacteristic.Permission.ReadEncryptedMitm => GattPermission.Read,
+      GattCharacteristic.Permission.Write => GattPermission.Read,
+      GattCharacteristic.Permission.WriteEncrypted => GattPermission.Read,
+      GattCharacteristic.Permission.WriteEncryptedMitm => GattPermission.Read,
+      GattCharacteristic.Permission.WriteSigned => GattPermission.Read,
+      GattCharacteristic.Permission.WriteSignedMitm => GattPermission.Read,
+      _ => throw new ArgumentOutOfRangeException(nameof(perm), $"Unknown permission {perm}")
+    };
 
     private class GattServerCallbackImpl : BluetoothGattServerCallback
     {
@@ -84,6 +130,10 @@ namespace ScoutingAppBase.Droid.Data.Bluetooth
       public override void OnConnectionStateChange(BluetoothDevice device, [GeneratedEnum] ProfileState status, [GeneratedEnum] ProfileState newState)
       {
         base.OnConnectionStateChange(device, status, newState);
+        if (status == ProfileState.Connected)
+        {
+
+        }
       }
 
       public override void OnNotificationSent(BluetoothDevice device, [GeneratedEnum] GattStatus status)

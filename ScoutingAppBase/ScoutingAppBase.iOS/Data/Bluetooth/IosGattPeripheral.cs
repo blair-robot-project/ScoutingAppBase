@@ -13,12 +13,8 @@ namespace ScoutingAppBase.iOS.Data.Bluetooth
 {
   internal class IosGattPeripheral : IGattPeripheral
   {
-    private readonly EventConfig Config;
-
-    public IosGattPeripheral(EventConfig config)
+    public IosGattPeripheral(List<GattService> services)
     {
-      Config = config;
-
       var manager = new CBPeripheralManager();
 
       // Add our custom service and characteristics
@@ -49,6 +45,14 @@ namespace ScoutingAppBase.iOS.Data.Bluetooth
     public void Dispose()
     {
       // todo implement
+    }
+
+    public class PeripheralDelegateImpl : CBPeripheralManagerDelegate
+    {
+      public override void StateUpdated(CBPeripheralManager peripheral)
+      {
+        throw new NotImplementedException();
+      }
     }
   }
 }
