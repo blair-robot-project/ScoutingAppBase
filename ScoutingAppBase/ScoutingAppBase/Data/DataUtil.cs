@@ -1,21 +1,32 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace ScoutingAppBase.Data
 {
   public static class DataUtil
   {
-    private static readonly string ConfigFileName = "config.json";
-    private static readonly string MatchFilePrefix = "match-";
+    private const string ConfigFileName = "config.json";
+    private const string MatchFilePrefix = "match-";
 
-    private static readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+    /// <summary>
+    /// Regex to check if a file could be a serialized match
+    /// </summary>
+    private static readonly Regex MatchFileRegex = new Regex($"{MatchFilePrefix}\\d+.json");
+
+    /// <summary>
+    /// The folder where all event data will be stored
+    /// </summary>
+    private static readonly string StorageFolder =
+      Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+    private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
     {
       PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-      Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+      Converters = {new JsonStringEnumConverter(JsonNamingPolicy.CamelCase)},
       ReadCommentHandling = JsonCommentHandling.Skip,
       AllowTrailingCommas = true
     };
@@ -24,24 +35,17 @@ namespace ScoutingAppBase.Data
     /// Load the last saved event from the given folder.
     /// </summary>
     /// <returns>The Event if loading was successful, null if something went wrong</returns>
-    public static EventData? LoadEvent(string storageFolder)
+    public static EventData? LoadEvent()
     {
-      var eventConfig = LoadConfig(Path.Combine(storageFolder, ConfigFileName));
-      if (eventConfig == null)
-      {
-        return null;
-      }
+      var eventConfig = LoadConfig(Path.Combine(StorageFolder, ConfigFileName));
+      if (eventConfig == null) return null;
 
-      var matches = new List<MatchData>();
-
-      foreach (var file in Directory.EnumerateFiles(storageFolder))
-      {
-        if (file.StartsWith(MatchFilePrefix) && file.EndsWith(".json"))
-        {
-          var match = Deserialize<MatchData>(Path.Combine(file));
-          if (match != null) matches.Add(match);
-        }
-      }
+      var matches =
+        from file in Directory.EnumerateFiles(StorageFolder)
+        where file.StartsWith(MatchFilePrefix) && file.EndsWith(".json")
+        let match = Deserialize<MatchData>(Path.Combine(file))
+        where match != null
+        select (MatchData) match;
 
       return new EventData(eventConfig, matches);
     }
@@ -50,26 +54,21 @@ namespace ScoutingAppBase.Data
     /// Save an event in the given folder. Previously saved matches are deleted first.
     /// </summary>
     /// <param name="ev"></param>
-    /// <param name="storageFolder"></param>
-    public static void SaveEvent(EventData ev, string storageFolder)
+    public static void SaveEvent(EventData ev)
     {
-      Serialize(ev.Config, Path.Combine(storageFolder, ConfigFileName));
+      Serialize(ev.Config, Path.Combine(StorageFolder, ConfigFileName));
 
       // Delete all the previous matches
-      foreach (var file in Directory.EnumerateFiles(storageFolder))
+      foreach (string file in Directory.EnumerateFiles(StorageFolder))
       {
-        if (file.StartsWith(MatchFilePrefix) && file.EndsWith(".json"))
-        {
-          File.Delete(file);
-        }
+        if (MatchFileRegex.IsMatch(file)) File.Delete(file);
       }
 
-      foreach (var match in ev.Matches)
-      {
-        var matchName = match[GeneralFields.MatchNum];
-        Serialize(match, Path.Combine(storageFolder, $"{MatchFilePrefix}{matchName}.json"));
-      }
+      ev.Matches.ForEach(SaveMatch);
     }
+
+    public static void SaveMatch(MatchData match) => Serialize(match,
+      Path.Combine(StorageFolder, $"{MatchFilePrefix}{match[GeneralFields.MatchNum]}.json"));
 
     /// <summary>
     /// Try to deserialize an EventConfig from JSON. Returns null if it was invalid.
@@ -93,16 +92,10 @@ namespace ScoutingAppBase.Data
       return config;
     }
 
-    private static void Serialize<T>(T obj, string path)
-    {
-      var json = JsonSerializer.Serialize<T>(obj, jsonOptions);
-      File.WriteAllText(path, json);
-    }
+    private static void Serialize<T>(T obj, string path) =>
+      File.WriteAllText(path, JsonSerializer.Serialize(obj, JsonOptions));
 
-    private static T? Deserialize<T>(string path) where T : class
-    {
-      var json = File.ReadAllText(path);
-      return JsonSerializer.Deserialize<T>(json, jsonOptions);
-    }
+    private static T? Deserialize<T>(string path) where T : class =>
+      JsonSerializer.Deserialize<T>(File.ReadAllText(path), JsonOptions);
   }
 }

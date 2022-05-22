@@ -12,8 +12,6 @@ namespace ScoutingAppBase.iOS.Bluetooth
 {
   internal class IosGattPeripheral : GattPeripheral
   {
-    private readonly CBPeripheralManager Manager;
-
     /// <summary>
     /// Maps UUIDs to their iOS characteristic objects
     /// </summary>
@@ -23,9 +21,9 @@ namespace ScoutingAppBase.iOS.Bluetooth
     public IosGattPeripheral(
       CBPeripheralManager manager,
       List<GattService> services,
-      GattPeripheralCallbacks callbacks) : base(services, callbacks)
+      GattPeripheralCallbacks callbacks)
     {
-      Manager = manager;
+      SetupCallbacks(manager, callbacks);
 
       // Add our custom service and characteristics
       foreach (var service in services)
@@ -43,12 +41,14 @@ namespace ScoutingAppBase.iOS.Bluetooth
           CBAttributePermissions perms = characteristic.Permissions
             .Select(ToIosPerm)
             .Aggregate((p1, p2) => p1 | p2);
-          return new CBMutableCharacteristic(
+          var iosChar = new CBMutableCharacteristic(
             CBUUID.FromString(characteristic.Uuid), props, null, perms
           );
+          ToIosChar[characteristic.Uuid] = iosChar;
+          return iosChar;
         }).ToArray<CBCharacteristic>();
 
-        Manager.AddService(iosService);
+        manager.AddService(iosService);
       }
     }
 
@@ -60,6 +60,30 @@ namespace ScoutingAppBase.iOS.Bluetooth
     public override void WriteCharacteristic(string uuid, byte[] value)
     {
       ToIosChar[uuid].Value = NSData.FromArray(value);
+    }
+
+    private static void SetupCallbacks(CBPeripheralManager manager, GattPeripheralCallbacks callbacks)
+    {
+      // todo implement other callbacks
+      if (callbacks.OnReadRequest != null)
+      {
+        manager.ReadRequestReceived +=
+          (_, args) => callbacks.OnReadRequest(args.Request.Characteristic.UUID.Uuid);
+      }
+
+      if (callbacks.OnWriteRequest != null)
+      {
+        manager.WriteRequestsReceived += (_, args) =>
+        {
+          foreach (var request in args.Requests)
+          {
+            if (request.Value != null)
+            {
+              callbacks.OnWriteRequest(request.Characteristic.UUID.Uuid, request.Value.ToArray());
+            }
+          }
+        };
+      }
     }
 
     /// <summary>
@@ -102,27 +126,9 @@ namespace ScoutingAppBase.iOS.Bluetooth
       }
     }
 
-    override public void Dispose()
+    public override void Dispose()
     {
       // todo implement
-    }
-
-    public class PeripheralDelegateImpl : CBPeripheralManagerDelegate
-    {
-      private readonly GattPeripheralCallbacks Callbacks;
-
-      public PeripheralDelegateImpl(GattPeripheralCallbacks callbacks) =>
-        Callbacks = callbacks;
-
-      public override void StateUpdated(CBPeripheralManager peripheral)
-      {
-        throw new NotImplementedException();
-      }
-
-      public override void ReadRequestReceived(CBPeripheralManager peripheral, CBATTRequest request)
-      {
-        base.ReadRequestReceived(peripheral, request);
-      }
     }
   }
 }

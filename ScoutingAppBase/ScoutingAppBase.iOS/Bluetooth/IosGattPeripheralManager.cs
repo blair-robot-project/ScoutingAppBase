@@ -4,15 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UIKit;
 using Xamarin.Forms;
-
 using ScoutingAppBase.Bluetooth;
 
 [assembly: Dependency(typeof(ScoutingAppBase.iOS.Bluetooth.IosGattPeripheralManager))]
+
 namespace ScoutingAppBase.iOS.Bluetooth
 {
-  internal class IosGattPeripheralManager : GattPeripheralManager
+  internal class IosGattPeripheralManager : IGattPeripheralManager
   {
-
     private readonly CBPeripheralManager Manager;
 
     public IosGattPeripheralManager()
@@ -26,53 +25,46 @@ namespace ScoutingAppBase.iOS.Bluetooth
 
     public void StartAdvertising(GattAdOptions adData)
     {
-      var iosAdData = new Dictionary<NSString, NSObject>();
+      var iosAdData = new Dictionary<NSObject, NSObject>();
 
       if (adData.IncludeDeviceName)
       {
-        iosAdData.Add(CBAdvertisement.DataLocalNameKey, NSObject.FromObject(UIDevice.CurrentDevice.Name));
+        iosAdData[CBAdvertisement.DataLocalNameKey] = NSObject.FromObject(UIDevice.CurrentDevice.Name);
       }
 
       if (adData.PowerLevel != null)
       {
-        iosAdData.Add(CBAdvertisement.DataTxPowerLevelKey, NSObject.FromObject(adData.PowerLevel));
+        iosAdData[CBAdvertisement.DataTxPowerLevelKey] = NSObject.FromObject(adData.PowerLevel);
       }
 
-      if (adData.ServiceUuids != null)
-      {
-        iosAdData.Add(
-          CBAdvertisement.DataServiceUUIDsKey,
-          NSArray.FromNSObjects(
-            adData.ServiceUuids.Select(CBUUID.FromString).ToArray()
-          )
+      iosAdData[CBAdvertisement.DataServiceUUIDsKey] =
+        NSArray.FromNSObjects(
+          adData.ServiceUuids.Select(CBUUID.FromString).ToArray()
         );
-      }
 
       if (adData.ManufacturerSpecificData != null)
       {
         // todo figure out how to send this
-        iosAdData.Add(CBAdvertisement.DataManufacturerDataKey, null);
+        // iosAdData[CBAdvertisement.DataManufacturerDataKey] = null;
       }
 
       if (adData.ServiceData != null)
       {
-        iosAdData.Add(
-          CBAdvertisement.DataServiceDataKey,
+        iosAdData[CBAdvertisement.DataServiceDataKey] =
           NSDictionary.FromObjectsAndKeys(
-            adData.ServiceData.Select(serviceData => CBUUID.FromString(serviceData.Uuid)).ToArray(),
-            adData.ServiceData.Select(serviceData => NSData.FromArray(serviceData.Data)).ToArray()
-          )
-        );
+            adData.ServiceData
+              .Select(serviceData => (NSObject) CBUUID.FromString(serviceData.Uuid)).ToArray(),
+            adData.ServiceData
+              .Select(serviceData => (NSObject) NSData.FromArray(serviceData.Data))
+              .ToArray()
+          );
       }
 
       Manager.StartAdvertising(
-        NSDictionary.FromObjectsAndKeys(
-          iosAdData.Keys.ToArray(), iosAdData.Values.ToArray()));
+        NSDictionary.FromObjectsAndKeys(iosAdData.Keys.ToArray(), iosAdData.Values.ToArray())
+      );
     }
 
-    public void StopAdvertising()
-    {
-      Manager.StopAdvertising();
-    }
+    public void StopAdvertising() => Manager.StopAdvertising();
   }
 }

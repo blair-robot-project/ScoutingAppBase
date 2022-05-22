@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Xamarin.Forms;
-using Xamarin.Forms.Xaml;
-using Xamarin.CommunityToolkit;
 using ScoutingAppBase.Data;
 using ScoutingAppBase.Pages;
 
@@ -12,12 +9,6 @@ namespace ScoutingAppBase
 {
   public partial class App : Application
   {
-    /// <summary>
-    /// The folder where all event data will be stored
-    /// </summary>
-    public static readonly string StorageFolder =
-      Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
     public App()
     {
       InitializeComponent();

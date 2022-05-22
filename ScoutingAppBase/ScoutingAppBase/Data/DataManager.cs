@@ -9,9 +9,9 @@ namespace ScoutingAppBase.Data
 {
   public class DataManager
   {
-    private readonly GattPeripheralManager Manager;
-
     private readonly GattPeripheral Peripheral;
+
+    private readonly Action<MatchData> OnSync;
 
     /// <summary>
     /// Keys are field names, values are corresponding characteristic UUIDs
@@ -44,7 +44,9 @@ namespace ScoutingAppBase.Data
     /// <param name="onSync">Action to execute when a match is successfully synced</param>
     public DataManager(EventConfig config, Action<MatchData> onSync)
     {
-      Manager = GattPeripheralManager.Get();
+      OnSync = onSync;
+
+      IGattPeripheralManager manager = IGattPeripheralManager.Get();
 
       FieldsToChars = new Dictionary<string, string>();
       FieldNamesToConfigs = new Dictionary<string, FieldConfig>();
@@ -67,7 +69,7 @@ namespace ScoutingAppBase.Data
 
       var service = new GattService(config.ServiceUuid, true, chars);
 
-      Peripheral = Manager.Create(
+      Peripheral = manager.Create(
         new List<GattService> {service},
         new GattPeripheralCallbacks
         {
@@ -75,7 +77,7 @@ namespace ScoutingAppBase.Data
         }
       );
 
-      Manager.StartAdvertising(
+      manager.StartAdvertising(
         new GattAdOptions
         {
           IncludeDeviceName = true,
@@ -106,9 +108,14 @@ namespace ScoutingAppBase.Data
         Debug.Assert(CurrMatch != null);
         var synced = (bool) Decode(fieldConfig, value);
         CurrMatch!.Synced = synced;
-        // If it didn't sync, process this match again later
-        if (!synced)
+        if (synced)
+        {
+          OnSync(CurrMatch);
+        } else
+        {
+          // If it didn't sync, process this match again later
           Matches.Enqueue(CurrMatch!);
+        }
       }
 
       // If there are more matches, start on the next one

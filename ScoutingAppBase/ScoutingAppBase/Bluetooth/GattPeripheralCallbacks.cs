@@ -1,9 +1,4 @@
-﻿using ScoutingAppBase.Bluetooth;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ScoutingAppBase.Bluetooth
+﻿namespace ScoutingAppBase.Bluetooth
 {
   public class GattPeripheralCallbacks
   {

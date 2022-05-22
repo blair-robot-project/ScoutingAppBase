@@ -71,7 +71,7 @@ namespace ScoutingAppBase.Data
   /// <summary>
   /// Fields that are kept every year
   /// </summary>
-  public class GeneralFields
+  public static class GeneralFields
   {
     public static readonly FieldConfig MatchNum = new FieldConfig
     {

@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
 
 #nullable enable
@@ -11,15 +8,16 @@ namespace ScoutingAppBase.Data
 {
   public sealed class EventData
   {
-    public EventData(EventConfig config, List<MatchData> matches)
-    {
-      Config = config;
-      Matches = matches;
-    }
-
+    
     public readonly EventConfig Config;
 
     public readonly List<MatchData> Matches;
+
+    public EventData(EventConfig config, IEnumerable<MatchData> matches)
+    {
+      Config = config;
+      Matches = matches.ToList();
+    }
   }
 
   public sealed class MatchData
@@ -54,11 +52,5 @@ namespace ScoutingAppBase.Data
       get => Fields[fieldConfig.Name];
       set => Fields[fieldConfig.Name] = value;
     }
-  }
-
-  public enum Alliance
-  {
-    Blue,
-    Red
   }
 }

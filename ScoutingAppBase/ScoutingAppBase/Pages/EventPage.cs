@@ -90,7 +90,7 @@ namespace ScoutingAppBase.Pages
     private async void GoToMatch(MatchData matchData)
     {
       await Navigation.PushAsync(
-        new MatchPage(matchData, EventData.Config.SpecFieldConfigs, DataManager));
+        new MatchPage(matchData, EventData.Config, DataManager));
     }
   }
 }

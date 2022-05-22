@@ -1,8 +1,5 @@
 ﻿using Android.App;
 using Android.Bluetooth;
-using Android.Bluetooth.LE;
-using Android.Content;
-using Android.OS;
 using Android.Runtime;
 using Java.Util;
 using ScoutingAppBase.Bluetooth;
@@ -14,10 +11,6 @@ namespace ScoutingAppBase.Droid.Bluetooth
 {
   internal class DroidGattPeripheral : GattPeripheral
   {
-    private readonly BluetoothManager Manager;
-    private readonly BluetoothAdapter Adapter;
-    private readonly BluetoothGattServer GattServer;
-
     /// <summary>
     /// Maps UUIDs to their Android characteristic objects
     /// </summary>
@@ -27,12 +20,10 @@ namespace ScoutingAppBase.Droid.Bluetooth
     public DroidGattPeripheral(
       BluetoothManager manager,
       List<GattService> services,
-      GattPeripheralCallbacks callbacks) : base(services, callbacks)
+      GattPeripheralCallbacks callbacks)
     {
-      Manager = manager;
-      Adapter = Manager.Adapter;
-
-      GattServer = Manager.OpenGattServer(Application.Context, new GattServerCallbackImpl())!;
+      BluetoothGattServer gattServer =
+        manager.OpenGattServer(Application.Context, new GattServerCallbackImpl(callbacks))!;
 
       // Add our custom service and characteristics
       foreach (var service in services)
@@ -57,7 +48,7 @@ namespace ScoutingAppBase.Droid.Bluetooth
           droidService.AddCharacteristic(droidChar);
         }
 
-        GattServer.AddService(droidService);
+        gattServer.AddService(droidService);
       }
     }
 
@@ -78,18 +69,18 @@ namespace ScoutingAppBase.Droid.Bluetooth
     /// <returns></returns>
     private static GattProperty ToDroidProp(GattChar.Property prop)
     {
-      switch (prop)
+      return prop switch
       {
-        case GattChar.Property.Broadcast: return GattProperty.Broadcast;
-        case GattChar.Property.Read: return GattProperty.Read;
-        case GattChar.Property.WriteNoResponse: return GattProperty.WriteNoResponse;
-        case GattChar.Property.Write: return GattProperty.Write;
-        case GattChar.Property.Notify: return GattProperty.Notify;
-        case GattChar.Property.Indicate: return GattProperty.Indicate;
-        case GattChar.Property.SignedWrite: return GattProperty.SignedWrite;
-        case GattChar.Property.ExtendProps: return GattProperty.ExtendedProps;
-        default: throw new ArgumentOutOfRangeException(nameof(prop), $"Unknown property {prop}");
-      }
+        GattChar.Property.Broadcast => GattProperty.Broadcast,
+        GattChar.Property.Read => GattProperty.Read,
+        GattChar.Property.WriteNoResponse => GattProperty.WriteNoResponse,
+        GattChar.Property.Write => GattProperty.Write,
+        GattChar.Property.Notify => GattProperty.Notify,
+        GattChar.Property.Indicate => GattProperty.Indicate,
+        GattChar.Property.SignedWrite => GattProperty.SignedWrite,
+        GattChar.Property.ExtendProps => GattProperty.ExtendedProps,
+        _ => throw new ArgumentOutOfRangeException(nameof(prop), $"Unknown property {prop}")
+      };
     }
 
     /// <summary>
@@ -99,18 +90,18 @@ namespace ScoutingAppBase.Droid.Bluetooth
     /// <returns></returns>
     private static GattPermission ToDroidPerm(GattChar.Permission perm)
     {
-      switch (perm)
+      return perm switch
       {
-        case GattChar.Permission.Read: return GattPermission.Read;
-        case GattChar.Permission.ReadEncrypted: return GattPermission.ReadEncrypted;
-        case GattChar.Permission.ReadEncryptedMitm: return GattPermission.ReadEncryptedMitm;
-        case GattChar.Permission.Write: return GattPermission.Write;
-        case GattChar.Permission.WriteEncrypted: return GattPermission.WriteEncrypted;
-        case GattChar.Permission.WriteEncryptedMitm: return GattPermission.WriteEncryptedMitm;
-        case GattChar.Permission.WriteSigned: return GattPermission.WriteSigned;
-        case GattChar.Permission.WriteSignedMitm: return GattPermission.WriteSignedMitm;
-        default: throw new ArgumentOutOfRangeException(nameof(perm), $"Unknown permission {perm}");
-      }
+        GattChar.Permission.Read => GattPermission.Read,
+        GattChar.Permission.ReadEncrypted => GattPermission.ReadEncrypted,
+        GattChar.Permission.ReadEncryptedMitm => GattPermission.ReadEncryptedMitm,
+        GattChar.Permission.Write => GattPermission.Write,
+        GattChar.Permission.WriteEncrypted => GattPermission.WriteEncrypted,
+        GattChar.Permission.WriteEncryptedMitm => GattPermission.WriteEncryptedMitm,
+        GattChar.Permission.WriteSigned => GattPermission.WriteSigned,
+        GattChar.Permission.WriteSignedMitm => GattPermission.WriteSignedMitm,
+        _ => throw new ArgumentOutOfRangeException(nameof(perm), $"Unknown permission {perm}")
+      };
     }
 
 
@@ -121,10 +112,18 @@ namespace ScoutingAppBase.Droid.Bluetooth
 
     private class GattServerCallbackImpl : BluetoothGattServerCallback
     {
+      private readonly GattPeripheralCallbacks Callbacks;
+
+      public GattServerCallbackImpl(GattPeripheralCallbacks callbacks) => Callbacks = callbacks;
+
       public override void OnCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset,
         BluetoothGattCharacteristic characteristic)
       {
         base.OnCharacteristicReadRequest(device, requestId, offset, characteristic);
+        if (characteristic.Uuid != null)
+        {
+          Callbacks.OnReadRequest?.Invoke(characteristic.Uuid.ToString());
+        }
       }
 
       public override void OnCharacteristicWriteRequest(BluetoothDevice device, int requestId,
@@ -132,28 +131,23 @@ namespace ScoutingAppBase.Droid.Bluetooth
       {
         base.OnCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset,
           value);
+        if (characteristic.Uuid != null)
+        {
+          Callbacks.OnWriteRequest?.Invoke(characteristic.Uuid.ToString(), value);
+        }
       }
 
       public override void OnConnectionStateChange(BluetoothDevice device, [GeneratedEnum] ProfileState status,
         [GeneratedEnum] ProfileState newState)
       {
         base.OnConnectionStateChange(device, status, newState);
-        if (status == ProfileState.Connected)
-        {
-        }
+        Callbacks.OnConnectionChanged?.Invoke(newState == ProfileState.Connected);
       }
 
       public override void OnNotificationSent(BluetoothDevice device, [GeneratedEnum] GattStatus status)
       {
         base.OnNotificationSent(device, status);
-      }
-    }
-
-    private class AdvertiseCallbackImpl : AdvertiseCallback
-    {
-      public override void OnStartFailure(AdvertiseFailure errorCode)
-      {
-        base.OnStartFailure(errorCode);
+        // todo implement
       }
     }
   }

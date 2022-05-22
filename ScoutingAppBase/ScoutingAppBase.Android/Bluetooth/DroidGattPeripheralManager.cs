@@ -1,5 +1,4 @@
-﻿using Android.App;
-using Android.Bluetooth;
+﻿using Android.Bluetooth;
 using Android.Bluetooth.LE;
 using Android.Content;
 using System.Collections.Generic;
@@ -13,7 +12,7 @@ using Java.Util;
 [assembly: Dependency(typeof(ScoutingAppBase.Droid.Bluetooth.DroidGattPeripheralManager))]
 namespace ScoutingAppBase.Droid.Bluetooth
 {
-  internal class DroidGattPeripheralManager : GattPeripheralManager
+  internal class DroidGattPeripheralManager : IGattPeripheralManager
   {
     private readonly BluetoothManager Manager;
 
@@ -51,16 +50,13 @@ namespace ScoutingAppBase.Droid.Bluetooth
             GattAdOptions.TxPowerLevel.PowerHigh => AdvertiseTx.PowerHigh,
             _ => throw new ArgumentOutOfRangeException()
           }
-        ); ;
+        );
         adDataBuilder.SetIncludeTxPowerLevel(true);
       }
 
-      if (adData.ServiceUuids != null)
+      foreach (var serviceUuid in adData.ServiceUuids)
       {
-        foreach (var serviceUuid in adData.ServiceUuids)
-        {
-          adDataBuilder.AddServiceUuid(new ParcelUuid(UUID.FromString(serviceUuid)));
-        }
+        adDataBuilder.AddServiceUuid(new ParcelUuid(UUID.FromString(serviceUuid)));
       }
 
       if (adData.ManufacturerSpecificData != null)

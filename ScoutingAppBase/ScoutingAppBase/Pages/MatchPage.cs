@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Globalization;
 using Xamarin.Forms;
 using ScoutingAppBase.Data;
 
@@ -14,7 +14,7 @@ namespace ScoutingAppBase.Pages
     /// </summary>
     private readonly bool StartedSynced;
 
-    public MatchPage(MatchData match, List<FieldConfig> fieldConfigs, DataManager dataManager)
+    public MatchPage(MatchData match, EventConfig config, DataManager dataManager)
     {
       Match = match;
       DataManager = dataManager;
@@ -25,10 +25,17 @@ namespace ScoutingAppBase.Pages
       backButton.Clicked += (sender, e) => Navigation.PopAsync();
       layout.Children.Add(backButton);
 
-      foreach (var fieldConfig in fieldConfigs)
+      layout.Children.Add(FieldConfigToElement(GeneralFields.TeamNum));
+      foreach (var fieldConfig in config.SpecFieldConfigs)
       {
         layout.Children.Add(FieldConfigToElement(fieldConfig));
       }
+
+      layout.Children.Add(FieldConfigToElement(GeneralFields.Comments));
+
+      var saveButton = new Button {Text = "Save"};
+      saveButton.Clicked += (sender, args) => DataUtil.SaveMatch(Match);
+      layout.Children.Add(saveButton);
 
       Content = layout;
     }
@@ -43,25 +50,21 @@ namespace ScoutingAppBase.Pages
 
     private View FieldConfigToElement(FieldConfig config)
     {
-      switch (config.Type)
+      return config.Type switch
       {
-        case FieldType.Num:
-          return NumElement(config);
-        case FieldType.Bool:
-          return BoolElement(config);
-        case FieldType.Choice:
-          return RadioElement(config);
-        default:
-          return TextElement(config);
-      }
+        FieldType.Num => NumElement(config),
+        FieldType.Bool => BoolElement(config),
+        FieldType.Choice => RadioElement(config),
+        _ => TextElement(config)
+      };
     }
 
     private View NumElement(FieldConfig fieldConfig)
     {
       var defaultVal = fieldConfig.Min;
-      Match[fieldConfig] = defaultVal.ToString();
+      Match[fieldConfig] = defaultVal.ToString(CultureInfo.InvariantCulture);
 
-      var valueLabel = new Label {Text = defaultVal.ToString()};
+      var valueLabel = new Label {Text = defaultVal.ToString(CultureInfo.InvariantCulture)};
       var stepper = new Stepper
       {
         Value = defaultVal,
@@ -71,7 +74,7 @@ namespace ScoutingAppBase.Pages
       };
       stepper.ValueChanged += (_, e) =>
       {
-        var newVal = e.NewValue.ToString();
+        var newVal = e.NewValue.ToString(CultureInfo.InvariantCulture);
         valueLabel.Text = newVal;
         Match[fieldConfig] = newVal;
         Match.Synced = false;
