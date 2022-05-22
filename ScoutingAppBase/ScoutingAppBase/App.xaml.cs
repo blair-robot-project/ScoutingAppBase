@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using Xamarin.CommunityToolkit;
-
 using ScoutingAppBase.Data;
 using ScoutingAppBase.Pages;
 
@@ -29,7 +28,8 @@ namespace ScoutingAppBase
         OurTeam = 449,
         SpecFieldConfigs =
         {
-          new FieldConfig {
+          new FieldConfig
+          {
             Name = "foo",
             Type = FieldType.Num,
             Min = 0,
@@ -38,7 +38,11 @@ namespace ScoutingAppBase
           }
         }
       };
-      MainPage = new NavigationPage(new EventPage(new EventData(eventConfig, new List<MatchData>())));
+      MainPage = new NavigationPage(
+        new EventPage(
+          new EventData(eventConfig, new List<MatchData>())
+        )
+      );
     }
 
     protected override void OnStart()

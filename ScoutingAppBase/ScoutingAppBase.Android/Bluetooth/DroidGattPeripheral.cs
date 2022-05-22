@@ -18,6 +18,12 @@ namespace ScoutingAppBase.Droid.Bluetooth
     private readonly BluetoothAdapter Adapter;
     private readonly BluetoothGattServer GattServer;
 
+    /// <summary>
+    /// Maps UUIDs to their Android characteristic objects
+    /// </summary>
+    private readonly Dictionary<string, BluetoothGattCharacteristic> ToDroidChar =
+      new Dictionary<string, BluetoothGattCharacteristic>();
+
     public DroidGattPeripheral(
       BluetoothManager manager,
       List<GattService> services,
@@ -47,11 +53,22 @@ namespace ScoutingAppBase.Droid.Bluetooth
           var droidChar = new BluetoothGattCharacteristic(
             UUID.FromString(characteristic.Uuid), props, perms
           );
+          ToDroidChar[characteristic.Uuid] = droidChar;
           droidService.AddCharacteristic(droidChar);
         }
 
         GattServer.AddService(droidService);
       }
+    }
+
+    public override byte[] ReadCharacteristic(string uuid)
+    {
+      return ToDroidChar[uuid].GetValue();
+    }
+
+    public override void WriteCharacteristic(string uuid, byte[] value)
+    {
+      ToDroidChar[uuid].SetValue(value);
     }
 
     /// <summary>
@@ -97,29 +114,32 @@ namespace ScoutingAppBase.Droid.Bluetooth
     }
 
 
-    override public void Dispose()
+    public override void Dispose()
     {
       // todo implement
     }
 
     private class GattServerCallbackImpl : BluetoothGattServerCallback
     {
-      public override void OnCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset, BluetoothGattCharacteristic characteristic)
+      public override void OnCharacteristicReadRequest(BluetoothDevice device, int requestId, int offset,
+        BluetoothGattCharacteristic characteristic)
       {
         base.OnCharacteristicReadRequest(device, requestId, offset, characteristic);
       }
 
-      public override void OnCharacteristicWriteRequest(BluetoothDevice device, int requestId, BluetoothGattCharacteristic characteristic, bool preparedWrite, bool responseNeeded, int offset, byte[] value)
+      public override void OnCharacteristicWriteRequest(BluetoothDevice device, int requestId,
+        BluetoothGattCharacteristic characteristic, bool preparedWrite, bool responseNeeded, int offset, byte[] value)
       {
-        base.OnCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset, value);
+        base.OnCharacteristicWriteRequest(device, requestId, characteristic, preparedWrite, responseNeeded, offset,
+          value);
       }
 
-      public override void OnConnectionStateChange(BluetoothDevice device, [GeneratedEnum] ProfileState status, [GeneratedEnum] ProfileState newState)
+      public override void OnConnectionStateChange(BluetoothDevice device, [GeneratedEnum] ProfileState status,
+        [GeneratedEnum] ProfileState newState)
       {
         base.OnConnectionStateChange(device, status, newState);
         if (status == ProfileState.Connected)
         {
-
         }
       }
 

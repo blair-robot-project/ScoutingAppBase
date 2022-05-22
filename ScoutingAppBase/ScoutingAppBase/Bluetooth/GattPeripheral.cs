@@ -10,11 +10,15 @@ namespace ScoutingAppBase.Bluetooth
 
     public readonly GattPeripheralCallbacks Callbacks;
 
-    public GattPeripheral(List<GattService> services, GattPeripheralCallbacks callbacks)
+    protected GattPeripheral(List<GattService> services, GattPeripheralCallbacks callbacks)
     {
       Services = services;
       Callbacks = callbacks;
     }
+
+    public abstract byte[] ReadCharacteristic(string uuid);
+    
+    public abstract void WriteCharacteristic(string uuid, byte[] value);
 
     public abstract void Dispose();
   }

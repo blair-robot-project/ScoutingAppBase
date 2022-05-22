@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using ScoutingAppBase.Bluetooth;
 
@@ -15,9 +14,14 @@ namespace ScoutingAppBase.Data
     private readonly GattPeripheral Peripheral;
 
     /// <summary>
-    /// Keys are field names, values are corresponding characteristics
+    /// Keys are field names, values are corresponding characteristic UUIDs
     /// </summary>
-    private readonly Dictionary<string, GattChar> FieldsToChars;
+    private readonly Dictionary<string, string> FieldsToChars;
+
+    /// <summary>
+    /// Keys are field names, values are the corresponding field config
+    /// </summary>
+    private readonly Dictionary<string, FieldConfig> FieldNamesToConfigs;
 
     /// <summary>
     /// Keys are characteristic UUIDs, values are corresponding field configs
@@ -34,44 +38,65 @@ namespace ScoutingAppBase.Data
     /// </summary>
     private readonly ConcurrentQueue<MatchData> Matches = new ConcurrentQueue<MatchData>();
 
-    public DataManager(EventConfig config)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="onSync">Action to execute when a match is successfully synced</param>
+    public DataManager(EventConfig config, Action<MatchData> onSync)
     {
       Manager = GattPeripheralManager.Get();
 
-      FieldsToChars = new Dictionary<string, GattChar>();
+      FieldsToChars = new Dictionary<string, string>();
+      FieldNamesToConfigs = new Dictionary<string, FieldConfig>();
       CharsToFields = new Dictionary<string, FieldConfig>();
+      var chars = new List<GattChar>();
       foreach (var field in config.AllFieldConfigs)
       {
         var gattChar = new GattChar(
           field.Uuid,
           new List<GattChar.Property>
-          { GattChar.Property.Read, GattChar.Property.Write, GattChar.Property.Notify },
+            {GattChar.Property.Read, GattChar.Property.Write, GattChar.Property.Notify},
           new List<GattChar.Permission>
-          { GattChar.Permission.Read, GattChar.Permission.Write }
+            {GattChar.Permission.Read, GattChar.Permission.Write}
         );
-        FieldsToChars.Add(field.Name, gattChar);
+        FieldsToChars.Add(field.Name, field.Uuid);
+        FieldNamesToConfigs.Add(field.Name, field);
         CharsToFields.Add(field.Uuid, field);
+        chars.Add(gattChar);
       }
 
-      var service = new GattService(config.ServiceUuid, true, FieldsToChars.Values);
+      var service = new GattService(config.ServiceUuid, true, chars);
 
       Peripheral = Manager.Create(
-          new List<GattService> { service },
-          new GattPeripheralCallbacks
-          {
-            OnWriteRequest = OnWriteRequest
-          }
-        );
+        new List<GattService> {service},
+        new GattPeripheralCallbacks
+        {
+          OnWriteRequest = OnWriteRequest
+        }
+      );
 
-      Manager.StartAdvertising(new GattAdOptions
-      {
-        IncludeDeviceName = true,
-        PowerLevel = GattAdOptions.TxPowerLevel.PowerHigh,
-        ServiceUuids = { service.Uuid }
-      });
+      Manager.StartAdvertising(
+        new GattAdOptions
+        {
+          IncludeDeviceName = true,
+          PowerLevel = GattAdOptions.TxPowerLevel.PowerHigh,
+          ServiceUuids = {service.Uuid}
+        }
+      );
     }
 
-    public void SendMatch(MatchData match) => Matches.Enqueue(match);
+    public void SendMatch(MatchData match)
+    {
+      if (Matches.IsEmpty)
+      {
+        // If there's no other matches to sync, immediately start syncing this
+        CurrMatch = match;
+        WriteMatch(match);
+      } else
+      {
+        Matches.Enqueue(match);
+      }
+    }
 
     private void OnWriteRequest(string uuid, byte[] value)
     {
@@ -79,7 +104,7 @@ namespace ScoutingAppBase.Data
       if (uuid == GeneralFields.Synced.Uuid)
       {
         Debug.Assert(CurrMatch != null);
-        var synced = (bool)Decode(fieldConfig, value);
+        var synced = (bool) Decode(fieldConfig, value);
         CurrMatch!.Synced = synced;
         // If it didn't sync, process this match again later
         if (!synced)
@@ -107,7 +132,7 @@ namespace ScoutingAppBase.Data
     {
       foreach (var (fieldName, field) in match.Fields)
       {
-        var encoded = Encode(FieldsToChars[fieldName], field);
+        Peripheral.WriteCharacteristic(FieldsToChars[fieldName], Encode(FieldNamesToConfigs[fieldName], field));
       }
     }
 
@@ -118,10 +143,10 @@ namespace ScoutingAppBase.Data
     {
       return fieldConfig.Type switch
       {
-        FieldType.Num => BitConverter.GetBytes((double)field),
-        FieldType.Bool => BitConverter.GetBytes((bool)field),
-        FieldType.Text => Encoding.ASCII.GetBytes((string)field),
-        FieldType.Choice => Encoding.ASCII.GetBytes((string)field),
+        FieldType.Num => BitConverter.GetBytes((double) field),
+        FieldType.Bool => BitConverter.GetBytes((bool) field),
+        FieldType.Text => Encoding.ASCII.GetBytes((string) field),
+        FieldType.Choice => Encoding.ASCII.GetBytes((string) field),
         _ => throw new ArgumentOutOfRangeException()
       };
     }
@@ -129,8 +154,6 @@ namespace ScoutingAppBase.Data
     /// <summary>
     /// Decode a characteristic value given the corresponding field config
     /// </summary>
-    /// <param name="value">The value of the characteristic</param>
-    /// <returns></returns>
     private object Decode(FieldConfig fieldConfig, byte[] value)
     {
       return fieldConfig.Type switch

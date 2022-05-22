@@ -1,22 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
+﻿using System.Collections.Generic;
 using Xamarin.Forms;
-
 using ScoutingAppBase.Data;
 
 namespace ScoutingAppBase.Pages
 {
   public sealed class MatchPage : ContentPage
   {
-    public MatchPage(MatchData match, List<FieldConfig> fieldConfigs)
+    private readonly MatchData Match;
+    private readonly DataManager DataManager;
+
+    /// <summary>
+    /// Whether this match was already synced when this page was opened
+    /// </summary>
+    private readonly bool StartedSynced;
+
+    public MatchPage(MatchData match, List<FieldConfig> fieldConfigs, DataManager dataManager)
     {
       Match = match;
+      DataManager = dataManager;
+      StartedSynced = Match.Synced;
       var layout = new StackLayout();
 
-      var backButton = new Button { Text = "Back" };
+      var backButton = new Button {Text = "Back"};
       backButton.Clicked += (sender, e) => Navigation.PopAsync();
       layout.Children.Add(backButton);
 
@@ -28,7 +33,13 @@ namespace ScoutingAppBase.Pages
       Content = layout;
     }
 
-    private readonly MatchData Match;
+    protected override void OnDisappearing()
+    {
+      if (StartedSynced && !Match.Synced)
+      {
+        DataManager.SendMatch(Match);
+      }
+    }
 
     private View FieldConfigToElement(FieldConfig config)
     {
@@ -45,69 +56,73 @@ namespace ScoutingAppBase.Pages
       }
     }
 
-    private View NumElement(FieldConfig config)
+    private View NumElement(FieldConfig fieldConfig)
     {
-      var defaultVal = config.Min;
-      Match.Fields[config.Name] = defaultVal.ToString();
+      var defaultVal = fieldConfig.Min;
+      Match[fieldConfig] = defaultVal.ToString();
 
-      var valueLabel = new Label { Text = defaultVal.ToString() };
+      var valueLabel = new Label {Text = defaultVal.ToString()};
       var stepper = new Stepper
       {
         Value = defaultVal,
-        Minimum = config.Min,
-        Maximum = config.Max,
-        Increment = config.Inc
+        Minimum = fieldConfig.Min,
+        Maximum = fieldConfig.Max,
+        Increment = fieldConfig.Inc
       };
       stepper.ValueChanged += (_, e) =>
       {
         var newVal = e.NewValue.ToString();
         valueLabel.Text = newVal;
-        Match.Fields[config.Name] = newVal;
+        Match[fieldConfig] = newVal;
+        Match.Synced = false;
       };
 
       return new StackLayout
       {
         Orientation = StackOrientation.Horizontal,
-        Children = {
-          new Label { Text = config.Name },
+        Children =
+        {
+          new Label {Text = fieldConfig.Name},
           valueLabel,
           stepper
         }
       };
     }
 
-    private View BoolElement(FieldConfig config)
+    private View BoolElement(FieldConfig fieldConfig)
     {
-      Match.Fields[config.Name] = "false";
+      Match.Fields[fieldConfig.Name] = "false";
 
       var checkbox = new CheckBox();
       checkbox.CheckedChanged += (_, e) =>
       {
-        Match.Fields[config.Name] = e.Value.ToString();
+        Match.Fields[fieldConfig.Name] = e.Value.ToString();
+        Match.Synced = false;
       };
 
       return new StackLayout
       {
         Orientation = StackOrientation.Horizontal,
-        Children = {
-          new Label { Text = config.Name },
+        Children =
+        {
+          new Label {Text = fieldConfig.Name},
           checkbox
         }
       };
     }
 
-    private View RadioElement(FieldConfig config)
+    private View RadioElement(FieldConfig fieldConfig)
     {
       var layout = new StackLayout
       {
         Orientation = StackOrientation.Vertical,
-        Children = { new Label { Text = config.Name } }
+        Children = {new Label {Text = fieldConfig.Name}}
       };
 
-      foreach (var choice in config.Choices)
+      foreach (var choice in fieldConfig.Choices)
       {
-        var isSelected = config.DefaultChoice == choice;
-        Match.Fields[config.Name] = isSelected.ToString();
+        var isSelected = fieldConfig.DefaultChoice == choice;
+        Match.Fields[fieldConfig.Name] = isSelected.ToString();
 
         var button = new RadioButton
         {
@@ -116,7 +131,8 @@ namespace ScoutingAppBase.Pages
         };
         button.CheckedChanged += (_, e) =>
         {
-          Match.Fields[config.Name] = e.Value.ToString();
+          Match.Fields[fieldConfig.Name] = e.Value.ToString();
+          Match.Synced = false;
         };
 
         layout.Children.Add(button);
@@ -125,21 +141,23 @@ namespace ScoutingAppBase.Pages
       return layout;
     }
 
-    private View TextElement(FieldConfig config)
+    private View TextElement(FieldConfig fieldConfig)
     {
-      Match.Fields[config.Name] = "";
+      Match[fieldConfig] = "";
 
       var text = new Entry();
       text.TextChanged += (_, e) =>
       {
-        Match.Fields[config.Name] = e.NewTextValue;
+        Match[fieldConfig] = e.NewTextValue;
+        Match.Synced = false;
       };
 
       return new StackLayout
       {
         Orientation = StackOrientation.Horizontal,
-        Children = {
-          new Label { Text = config.Name },
+        Children =
+        {
+          new Label {Text = fieldConfig.Name},
           text
         }
       };

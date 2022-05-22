@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UIKit;
-
 using ScoutingAppBase.Data;
 using ScoutingAppBase.Bluetooth;
 
@@ -14,6 +13,12 @@ namespace ScoutingAppBase.iOS.Bluetooth
   internal class IosGattPeripheral : GattPeripheral
   {
     private readonly CBPeripheralManager Manager;
+
+    /// <summary>
+    /// Maps UUIDs to their iOS characteristic objects
+    /// </summary>
+    private readonly Dictionary<string, CBMutableCharacteristic> ToIosChar =
+      new Dictionary<string, CBMutableCharacteristic>();
 
     public IosGattPeripheral(
       CBPeripheralManager manager,
@@ -41,10 +46,20 @@ namespace ScoutingAppBase.iOS.Bluetooth
           return new CBMutableCharacteristic(
             CBUUID.FromString(characteristic.Uuid), props, null, perms
           );
-        }).ToArray();
+        }).ToArray<CBCharacteristic>();
 
         Manager.AddService(iosService);
       }
+    }
+
+    public override byte[] ReadCharacteristic(string uuid)
+    {
+      return ToIosChar[uuid].Value?.ToArray() ?? new byte[] { };
+    }
+
+    public override void WriteCharacteristic(string uuid, byte[] value)
+    {
+      ToIosChar[uuid].Value = NSData.FromArray(value);
     }
 
     /// <summary>
@@ -101,7 +116,6 @@ namespace ScoutingAppBase.iOS.Bluetooth
 
       public override void StateUpdated(CBPeripheralManager peripheral)
       {
-        
         throw new NotImplementedException();
       }
 

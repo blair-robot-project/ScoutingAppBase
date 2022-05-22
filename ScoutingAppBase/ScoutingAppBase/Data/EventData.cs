@@ -24,22 +24,41 @@ namespace ScoutingAppBase.Data
 
   public sealed class MatchData
   {
+    public int MatchNum => (int) this[GeneralFields.MatchNum];
+    
     /// <summary>
     /// Whether this match has been sent over to the server
     /// </summary>
-    public bool Synced { get; set; } = false;
+    public bool Synced
+    {
+      get => (bool) this[GeneralFields.Synced];
+      set => this[GeneralFields.Synced] = value;
+    }
 
-    public readonly Dictionary<string, object> Fields = new Dictionary<string, object>();
+    public readonly Dictionary<string, object> Fields;
+
+    public MatchData(int matchNum, bool synced)
+    {
+      Fields = new Dictionary<string, object>
+      {
+        [GeneralFields.MatchNum.Name] = matchNum,
+        [GeneralFields.Synced.Name] = synced
+      };
+    }
 
     [JsonConstructor]
-    public MatchData(Dictionary<string, object> fields, bool synced)
-      => (Fields, Synced) = (fields, synced);
+    public MatchData(Dictionary<string, object> fields) => Fields = fields;
 
-    public object this[FieldConfig fieldConfig] => Fields[fieldConfig.Name];
+    public object this[FieldConfig fieldConfig]
+    {
+      get => Fields[fieldConfig.Name];
+      set => Fields[fieldConfig.Name] = value;
+    }
   }
 
   public enum Alliance
   {
-    Blue, Red
+    Blue,
+    Red
   }
 }

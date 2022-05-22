@@ -66,8 +66,8 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Data\Bluetooth\IosGattPeripheral.cs" />
-    <Compile Include="Data\Bluetooth\IosGattPeripheralManager.cs" />
+    <Compile Include="Bluetooth\IosGattPeripheral.cs" />
+    <Compile Include="Bluetooth\IosGattPeripheralManager.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
     <None Include="Entitlements.plist" />

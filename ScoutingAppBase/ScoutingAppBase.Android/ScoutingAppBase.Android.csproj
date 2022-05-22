@@ -67,8 +67,8 @@
     <PackageReference Include="Xamarin.Essentials" Version="1.7.3" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Data\Bluetooth\DroidGattPeripheral.cs" />
-    <Compile Include="Data\Bluetooth\DroidGattPeripheralManager.cs" />
+    <Compile Include="Bluetooth\DroidGattPeripheral.cs" />
+    <Compile Include="Bluetooth\DroidGattPeripheralManager.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
