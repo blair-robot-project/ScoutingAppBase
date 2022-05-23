@@ -19,14 +19,7 @@ namespace ScoutingAppBase
         OurTeam = 449,
         SpecFieldConfigs =
         {
-          new FieldConfig
-          {
-            Name = "foo",
-            Type = FieldType.Num,
-            Min = 0,
-            Max = 100,
-            Inc = 1
-          }
+          
         }
       };
       MainPage = new NavigationPage(

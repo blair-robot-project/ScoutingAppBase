@@ -3,6 +3,9 @@ using System.Linq;
 
 namespace ScoutingAppBase.Bluetooth
 {
+  /// <summary>
+  /// Settings for a custom GATT service
+  /// </summary>
   public class GattService
   {
     public readonly string Uuid;

@@ -5,7 +5,7 @@ namespace ScoutingAppBase.Bluetooth
   /// <summary>
   /// Settings and data for advertising
   /// </summary>
-  public class GattAdOptions
+  public sealed class GattAdOptions
   {
     public bool IncludeDeviceName { get; set; } = false;
 

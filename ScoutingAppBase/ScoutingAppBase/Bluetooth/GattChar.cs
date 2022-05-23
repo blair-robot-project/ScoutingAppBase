@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace ScoutingAppBase.Bluetooth
 {
-  public class GattChar
+  public sealed class GattChar
   {
     public readonly string Uuid;
     public readonly ISet<Property> Properties;

@@ -9,6 +9,11 @@ namespace ScoutingAppBase.Data
 {
   public class DataManager
   {
+    /// <summary>
+    /// The UUID of our custom GATT service
+    /// </summary>
+    private const string GattServiceUuid = "095bb55e-cb66-48c1-8e61-8acc06e44513";
+
     private readonly GattPeripheral Peripheral;
 
     private readonly Action<MatchData> OnSync;
@@ -16,17 +21,17 @@ namespace ScoutingAppBase.Data
     /// <summary>
     /// Keys are field names, values are corresponding characteristic UUIDs
     /// </summary>
-    private readonly Dictionary<string, string> FieldsToChars;
+    private readonly Dictionary<string, string> FieldsToChars = new Dictionary<string, string>();
 
     /// <summary>
     /// Keys are field names, values are the corresponding field config
     /// </summary>
-    private readonly Dictionary<string, FieldConfig> FieldNamesToConfigs;
+    private readonly Dictionary<string, FieldConfig> FieldNamesToConfigs = new Dictionary<string, FieldConfig>();
 
     /// <summary>
     /// Keys are characteristic UUIDs, values are corresponding field configs
     /// </summary>
-    private readonly Dictionary<string, FieldConfig> CharsToFields;
+    private readonly Dictionary<string, FieldConfig> CharsToFields = new Dictionary<string, FieldConfig>();
 
     /// <summary>
     /// The match that's currently being synced
@@ -63,11 +68,12 @@ namespace ScoutingAppBase.Data
         );
         FieldsToChars.Add(field.Name, field.Uuid);
         FieldNamesToConfigs.Add(field.Name, field);
+        Console.WriteLine(field.Name + field.Uuid);
         CharsToFields.Add(field.Uuid, field);
         chars.Add(gattChar);
       }
 
-      var service = new GattService(config.ServiceUuid, true, chars);
+      var service = new GattService(GattServiceUuid, true, chars);
 
       Peripheral = manager.Create(
         new List<GattService> {service},
@@ -106,7 +112,7 @@ namespace ScoutingAppBase.Data
       if (uuid == GeneralFields.Synced.Uuid)
       {
         Debug.Assert(CurrMatch != null);
-        var synced = (bool) Decode(fieldConfig, value);
+        bool synced = (bool) Decode(fieldConfig, value);
         CurrMatch!.Synced = synced;
         if (synced)
         {
